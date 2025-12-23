@@ -1,7 +1,6 @@
 package com.mycompany.restaurante.controlador;
 
 import com.mycompany.restaurante.modelo.*;
-import com.mycompany.restaurante.dao.AlimentoDAO;
 import com.mycompany.restaurante.vista.VistaAlimentos;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,11 +8,11 @@ import javax.swing.JOptionPane;
 
 public class ControladorAlimentos implements ActionListener {
     private VistaAlimentos vista;
-    private AlimentoDAO dao;
+    private SistemaRestaurante sistema;
 
-    public ControladorAlimentos(VistaAlimentos vista, AlimentoDAO dao) {
+    public ControladorAlimentos(VistaAlimentos vista, SistemaRestaurante sistema) {
         this.vista = vista;
-        this.dao = dao;
+        this.sistema = sistema;
         
         this.vista.btnGuardar.addActionListener(this);
         this.vista.btnEliminar.addActionListener(this);
@@ -43,11 +42,10 @@ public class ControladorAlimentos implements ActionListener {
             }
 
             double precio = Double.parseDouble(textoPrecio);
-
             Alimento nuevo = tipo.equals("Bebida") ? new Bebida(nombre, precio) : new PlatoFuerte(nombre, precio);
 
-            if (dao.registrar(nuevo)) {
-                JOptionPane.showMessageDialog(vista, "¡Alimento Guardado!");
+            if (sistema.registrarAlimento(nuevo)) { 
+                JOptionPane.showMessageDialog(vista, "Alimento Guardado!");
                 listarEnTabla();
                 limpiarFormulario();
             } else {
@@ -61,30 +59,25 @@ public class ControladorAlimentos implements ActionListener {
 
     private void eliminarAlimento() {
         int fila = vista.tabla.getSelectedRow();
-        
         if (fila == -1) {
             JOptionPane.showMessageDialog(vista, "Selecciona un alimento de la tabla para eliminar.");
             return;
         }
         
         int id = (int) vista.tabla.getValueAt(fila, 0);
-        
-        int confirm = JOptionPane.showConfirmDialog(vista, "¿Seseas eliminar?", "Eliminar", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(vista, "¿Deseas eliminar?", "Eliminar", JOptionPane.YES_NO_OPTION);
         
         if (confirm == JOptionPane.YES_OPTION) {
-            dao.eliminar(id);
+            sistema.eliminarAlimento(id);
             listarEnTabla();
         }
     }
 
     private void listarEnTabla() {
         vista.modelo.setRowCount(0);
-        for (Alimento a : dao.listar()) {
+        for (Alimento a : sistema.obtenerTodosAlimentos()) {
             vista.modelo.addRow(new Object[]{
-                a.getId(), 
-                a.getNombre(), 
-                a.getPrecio(), 
-                a.getClass().getSimpleName()
+                a.getId(), a.getNombre(), a.getPrecio(), a.getClass().getSimpleName()
             });
         }
     }

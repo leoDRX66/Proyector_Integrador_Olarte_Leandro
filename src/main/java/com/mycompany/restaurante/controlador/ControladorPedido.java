@@ -1,6 +1,5 @@
 package com.mycompany.restaurante.controlador;
 
-import com.mycompany.restaurante.dao.*;
 import com.mycompany.restaurante.modelo.*;
 import com.mycompany.restaurante.vista.VistaPedido;
 import java.awt.event.ActionEvent;
@@ -9,15 +8,11 @@ import javax.swing.JOptionPane;
 
 public class ControladorPedido implements ActionListener {
     private VistaPedido vista;
-    private PersonaDAO personaDAO;
-    private AlimentoDAO alimentoDAO;
-    private PedidoDAO pedidoDAO;
+    private SistemaRestaurante sistema;
 
-    public ControladorPedido(VistaPedido vista, PersonaDAO pDao, AlimentoDAO aDao, PedidoDAO pedDao) {
+    public ControladorPedido(VistaPedido vista, SistemaRestaurante sistema) {
         this.vista = vista;
-        this.personaDAO = pDao;
-        this.alimentoDAO = aDao;
-        this.pedidoDAO = pedDao;
+        this.sistema = sistema;
         
         vista.btnAgregar.addActionListener(this);
         vista.btnEntregar.addActionListener(this);
@@ -49,7 +44,6 @@ public class ControladorPedido implements ActionListener {
                 return;
             }
 
-
             int idCliente = Integer.parseInt(txtCliente); 
             int idChef = Integer.parseInt(chef.getCedula());
             int idMesero = Integer.parseInt(mesero.getCedula());
@@ -58,7 +52,7 @@ public class ControladorPedido implements ActionListener {
             
             double total = plato.getPrecio() + ((bebida != null) ? bebida.getPrecio() : 0);
 
-            if (pedidoDAO.registrarPedidoCompleto(idPlato, idBebida, idChef, idMesero, idCliente, total)) {
+            if (sistema.registrarPedido(idPlato, idBebida, idChef, idMesero, idCliente, total)) {
                 JOptionPane.showMessageDialog(vista, "¡Pedido Registrado!");
                 actualizarTabla();
                 vista.tfCliente.setText("");
@@ -81,7 +75,7 @@ public class ControladorPedido implements ActionListener {
         }
         
         int idPedido = (int) vista.tablaResumen.getValueAt(fila, 0);
-        if (pedidoDAO.eliminarPedido(idPedido)) {
+        if (sistema.eliminarPedido(idPedido)) { // Llamada al modelo
             JOptionPane.showMessageDialog(vista, "Pedido Entregado.");
             actualizarTabla();
         }
@@ -95,9 +89,9 @@ public class ControladorPedido implements ActionListener {
             vista.cbBebida.removeAllItems();
             vista.tfCliente.setText("");
 
-            for (Persona p : personaDAO.listarPorTipo("CHEF")) vista.cbChef.addItem(p);
-            for (Persona p : personaDAO.listarPorTipo("MESERO")) vista.cbMesero.addItem(p);
-            for (Alimento a : alimentoDAO.listar()) {
+            for (Persona p : sistema.obtenerPersonalPorTipo("CHEF")) vista.cbChef.addItem(p);
+            for (Persona p : sistema.obtenerPersonalPorTipo("MESERO")) vista.cbMesero.addItem(p);
+            for (Alimento a : sistema.obtenerTodosAlimentos()) {
                 if (a instanceof PlatoFuerte) vista.cbPlato.addItem(a);
                 else if (a instanceof Bebida) vista.cbBebida.addItem(a);
             }
@@ -107,6 +101,6 @@ public class ControladorPedido implements ActionListener {
     }
     
     private void actualizarTabla() {
-        if (pedidoDAO != null) vista.tablaResumen.setModel(pedidoDAO.obtenerResumenPedidos());
+        vista.tablaResumen.setModel(sistema.obtenerResumenPedidos());
     }
 }
